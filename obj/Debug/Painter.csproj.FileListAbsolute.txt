@@ -1,0 +1,9 @@
+D:\Veronika\Painter\Painter\bin\Debug\Painter.exe.config
+D:\Veronika\Painter\Painter\bin\Debug\Painter.exe
+D:\Veronika\Painter\Painter\bin\Debug\Painter.pdb
+D:\Veronika\Painter\Painter\obj\Debug\Painter.csproj.AssemblyReference.cache
+D:\Veronika\Painter\Painter\obj\Debug\Painter.Properties.Resources.resources
+D:\Veronika\Painter\Painter\obj\Debug\Painter.csproj.GenerateResource.cache
+D:\Veronika\Painter\Painter\obj\Debug\Painter.csproj.CoreCompileInputs.cache
+D:\Veronika\Painter\Painter\obj\Debug\Painter.exe
+D:\Veronika\Painter\Painter\obj\Debug\Painter.pdb
