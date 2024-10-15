@@ -12,10 +12,10 @@ namespace Painter
         private Color[] colors = { Color.Red, Color.Green, Color.Gray, Color.Pink, Color.Violet, Color.Blue, Color.Brown };
         private Rectangle shapeBounds = new Rectangle(250, 250, 450, 450);
         private Bitmap canvas;
-        private string bitmapExit = "D:\\Veronika\\Painter\\exit.png";
-        private string bitmapSave = "D:\\Veronika\\Painter\\download.png";
-        private string bitmapClear = "D:\\Veronika\\Painter\\trash.png";
-        private Bitmap bitmapBackground = new Bitmap("D:\\Veronika\\Painter\\background.jpg");
+        private Bitmap bitmapExit = new Bitmap("D:\\Veronika\\Painter\\Painter\\Resources\\exit.png");
+        private Bitmap bitmapSave =new Bitmap("D:\\Veronika\\Painter\\Painter\\Resources\\download.png");
+        private Bitmap bitmapClear = new Bitmap("D:\\Veronika\\Painter\\Painter\\Resources\\trash.png");
+        private Bitmap bitmapBackground = new Bitmap("D:\\Veronika\\Painter\\Painter\\Resources\\background.jpg");
         private Pen borderPen = new Pen(Color.Black, 2);
 
         public Form1()
@@ -142,17 +142,17 @@ namespace Painter
             CreateButton("ButtonExit", Color.White, new Point(posX + buttonSize.Width, 0), buttonSize, bitmapExit);
         }
 
-        private void CreateButton(string name, Color color, Point location, Size size, string imagePath = null)
+        private void CreateButton(string name, Color color, Point location, Size size, Bitmap bitmap = null)
         {
             Button button = new Button()
             {
                 Name = name,
                 BackColor = color,
-                Image = imagePath != null ? new Bitmap(imagePath) : null,
+                Image = bitmap != null ? new Bitmap(bitmap) : null,
                 Location = location,
                 Size = size
             };
-            button.Click += imagePath == null ? new EventHandler(SetColor) : new EventHandler(ExecuteFunctionalButtonClick);
+            button.Click += bitmap == null ? new EventHandler(SetColor) : new EventHandler(ExecuteFunctionalButtonClick);
             this.Controls.Add(button);
         }
 
@@ -168,6 +168,7 @@ namespace Painter
             {
                 this.Close();
             }
+
             else if (button.Name == "ButtonClear")
             {
                 Graphics g = Graphics.FromImage(canvas);
@@ -175,6 +176,7 @@ namespace Painter
                 DrawInitialShapes(g);
                 this.Invalidate();
             }
+
             else if (button.Name == "ButtonSave")
             {
                 SaveFileDialog saveFileDialog = new SaveFileDialog
