@@ -1,55 +1,99 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Drawing.Drawing2D;
 
 namespace Painter
 {
     public partial class Form1 : Form
     {
-        private Color color = Color.White;
-        private Color[] colors;
-        private Rectangle rect = new Rectangle(250, 250, 150, 150);
+        private Color selectedColor = Color.White;
+        private Color[] colors = { Color.Red, Color.Green, Color.Gray, Color.Pink, Color.Violet, Color.Blue, Color.Brown };
+        private Rectangle shapeBounds = new Rectangle(250, 250, 450, 450);
         private Bitmap canvas;
+        private string bitmapExit = "D:\\Veronika\\Painter\\exit.png";
+        private string bitmapSave = "D:\\Veronika\\Painter\\download.png";
+        private string bitmapClear = "D:\\Veronika\\Painter\\trash.png";
+        private Bitmap bitmapBackground = new Bitmap("D:\\Veronika\\Painter\\background.jpg");
+        private Pen borderPen = new Pen(Color.Black, 2);
 
         public Form1()
         {
-            this.Width = 700;
-            this.Height = 500;
-            colors = new Color[] { Color.Red, Color.Green, Color.Gray, Color.Pink, Color.Violet };
-            Paint += new PaintEventHandler(Painter);
-            MouseClick += new MouseEventHandler(OnMouseClick);
-            CreateButtons();
-            canvas = new Bitmap(this.Width, this.Height);
-            this.BackgroundImage = new Bitmap("D:\\Veronika\\Painter\\Canvas2.png");
-            Graphics g = Graphics.FromImage(canvas);
-            g.FillRectangle(Brushes.White, rect);
-            g.DrawRectangle(Pens.Black, rect);
-            g.FillEllipse(Brushes.White, rect);
-            g.DrawEllipse(Pens.Black, rect);
-            g.DrawLine(Pens.Black, rect.Left, rect.Top + rect.Top / 2, rect.Right, rect.Top + rect.Top / 2);
-            //createControl(0, 0, 0, "D:\\Veronika\\Painter\\canvas.bmp");
-            //createControl(1, 0, 700, "D:\\Veronika\\Painter\\palette.bmp");
-            //createControl(2, 900, 700, "D:\\Veronika\\Painter\\clear.bmp");
-            //createControl(3, 1000, 700, "D:\\Veronika\\Painter\\save.bmp");
-            //createControl(4, 1100, 700, "D:\\Veronika\\Painter\\exit.bmp");
+            InitializeComponent();
+            SetupForm();
+            InitializeCanvas();
+            CreateColorButtons();
+            CreateFunctionalButtons();
         }
 
-        private void OnMouseClick(object sender, MouseEventArgs e)
+        private void SetupForm()
         {
-            if (rect.Contains(e.Location))
+            this.Width = 1000;
+            this.Height = 900;
+            this.DoubleBuffered = true;
+            this.Paint += new PaintEventHandler(OnPaintCanvas);
+            this.MouseClick += new MouseEventHandler(OnCanvasMouseClick);
+
+        }
+
+        private void InitializeCanvas()
+        {
+            canvas = new Bitmap(this.Width, this.Height);
+            Graphics g = Graphics.FromImage(canvas);
+            DrawInitialShapes(g);
+            this.BackgroundImage = bitmapBackground;
+        }
+
+        private void DrawInitialShapes(Graphics g)
+        {
+            Rectangle mainCircle = shapeBounds;
+            g.FillEllipse(Brushes.White, mainCircle);
+            g.DrawEllipse(borderPen, mainCircle);
+
+            for (int i = 1; i <= 4; i++)
             {
-                FlooeFill(canvas, e.Location.X, e.Location.Y, color);
+                int offset = i * 30;
+                Rectangle circle = new Rectangle(mainCircle.X + offset, mainCircle.Y + offset, mainCircle.Width - offset * 2, mainCircle.Height - offset * 2);
+                g.DrawEllipse(borderPen, circle);
+            }
+
+            for (int i = 0; i <= 360; i += 30)
+            {
+                double angle = i * Math.PI / 180;
+                float x = mainCircle.X + mainCircle.Width / 2 + (float)(mainCircle.Width / 2 * Math.Cos(angle));
+                float y = mainCircle.Y + mainCircle.Height / 2 + (float)(mainCircle.Height / 2 * Math.Sin(angle));
+                g.DrawLine(borderPen, mainCircle.X + mainCircle.Width / 2, mainCircle.Y + mainCircle.Height / 2, x, y);
+            }
+        }
+
+        private void OnPaintCanvas(object sender, PaintEventArgs e)
+        {
+            e.Graphics.DrawImage(canvas, Point.Empty);
+        }
+
+        private void OnCanvasMouseClick(object sender, MouseEventArgs e)
+        {
+            if (IsPointInCircle(e.Location, shapeBounds))
+            {
+                FloodFill(canvas, e.Location.X, e.Location.Y, selectedColor);
                 this.Invalidate();
             }
         }
 
-        private void FlooeFill(Bitmap bmp, int x, int y, Color fillColor)
+        private bool IsPointInCircle(Point point, Rectangle bounds)
+        {
+            float centerX = bounds.X + bounds.Width / 2;
+            float centerY = bounds.Y + bounds.Height / 2;
+            float radius = bounds.Width / 2;
+
+            float dx = point.X - centerX;
+            float dy = point.Y - centerY;
+
+            return (dx * dx + dy * dy) <= (radius * radius);
+        }
+
+        private void FloodFill(Bitmap bmp, int x, int y, Color fillColor)
         {
             Color targetColor = bmp.GetPixel(x, y);
             if (targetColor.ToArgb() == fillColor.ToArgb() || targetColor.ToArgb() == Color.Black.ToArgb())
@@ -69,7 +113,6 @@ namespace Painter
                     continue;
 
                 bmp.SetPixel(pt.X, pt.Y, fillColor);
-
                 pixels.Push(new Point(pt.X + 1, pt.Y));
                 pixels.Push(new Point(pt.X - 1, pt.Y));
                 pixels.Push(new Point(pt.X, pt.Y + 1));
@@ -77,55 +120,72 @@ namespace Painter
             }
         }
 
-        private void Painter(object sender, PaintEventArgs e)
+        private void CreateColorButtons()
         {
-            Graphics g = e.Graphics;
-            g.DrawImage(canvas, Point.Empty);
+            int posX = 0;
+            Size buttonSize = new Size(100, 50);
+
+            for (int i = 0; i < colors.Length; i++)
+            {
+                CreateButton($"ButtonColor{i}", colors[i], new Point(posX, 0), buttonSize);
+                posX += buttonSize.Width;
+            }
         }
 
-        private void CreateButtons()
+        private void CreateFunctionalButtons()
         {
-            int count = 6;
-            int posX = 0;
+            int posX = colors.Length * 100;
+            Size buttonSize = new Size(100, 50);
 
-            for (int i = 0; i < count; i++)
+            CreateButton("ButtonClear", Color.White, new Point(posX, 0), buttonSize, bitmapClear);
+            CreateButton("ButtonSave", Color.White, new Point(posX += buttonSize.Width, 0), buttonSize, bitmapSave);
+            CreateButton("ButtonExit", Color.White, new Point(posX + buttonSize.Width, 0), buttonSize, bitmapExit);
+        }
+
+        private void CreateButton(string name, Color color, Point location, Size size, string imagePath = null)
+        {
+            Button button = new Button()
             {
-                Button button = new Button()
-                {
-                    Size = new Size(100, 50),
-                    Text = "",
-                    Location = new Point(posX, 10),
-                };
-                posX += button.Width;
-
-                if (i > 4)
-                {
-                    button.BackColor = Color.White;
-                    button.Image = new Bitmap("D:\\Veronika\\Painter\\save.bmp");
-                    button.Click += new EventHandler(OnExitClick);
-                }
-
-                else
-                {
-                    button.BackColor = colors[i];
-                }
-                button.Click += new EventHandler(SetColor);
-                this.Controls.Add(button);
-            }
+                Name = name,
+                BackColor = color,
+                Image = imagePath != null ? new Bitmap(imagePath) : null,
+                Location = location,
+                Size = size
+            };
+            button.Click += imagePath == null ? new EventHandler(SetColor) : new EventHandler(ExecuteFunctionalButtonClick);
+            this.Controls.Add(button);
         }
 
         private void SetColor(object sender, EventArgs e)
         {
-            Button button = sender as Button;
-            if (button != null)
-            {
-                color = button.BackColor;
-            }
+            selectedColor = (sender as Button).BackColor;
         }
 
-        private void OnExitClick(object sender, EventArgs e)
+        private void ExecuteFunctionalButtonClick(object sender, EventArgs e)
         {
-            this.Close();
+            Button button = sender as Button;
+            if (button.Name == "ButtonExit")
+            {
+                this.Close();
+            }
+            else if (button.Name == "ButtonClear")
+            {
+                Graphics g = Graphics.FromImage(canvas);
+                g.DrawImage(bitmapBackground, Point.Empty);
+                DrawInitialShapes(g);
+                this.Invalidate();
+            }
+            else if (button.Name == "ButtonSave")
+            {
+                SaveFileDialog saveFileDialog = new SaveFileDialog
+                {
+                    Filter = "Bitmap Image|*.bmp"
+                };
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    canvas.Save(saveFileDialog.FileName);
+                }
+            }
         }
     }
 }
